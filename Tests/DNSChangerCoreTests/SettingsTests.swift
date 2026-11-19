@@ -56,7 +56,7 @@ final class SettingsTests: XCTestCase {
         var s = AppSettings()
         s.addCustom(host: "x.example.com")
         s.pause = PauseState(until: Date(timeIntervalSince1970: 1000), restoreHost: "dns.google")
-        s.rules = NetworkRules(enabled: true, offOnSSIDs: ["Hotel"])
+        s.rules = NetworkRules(enabled: true, networks: [WiFiNetwork(ssid: "Hotel")])
         let decoded = try JSONDecoder().decode(AppSettings.self, from: JSONEncoder().encode(s))
         XCTAssertEqual(decoded, s)
     }

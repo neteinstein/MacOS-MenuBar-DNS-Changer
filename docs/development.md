@@ -27,7 +27,7 @@ Requires Xcode 15 or later (Swift 5.9) or its command line tools (`UNIVERSAL=1` 
 
 | Path | What |
 | --- | --- |
-| `Sources/DNSChangerCore` | Platform-independent logic: presets and provider info, hostname and NextDNS validation, settings, toggle cycling, network rules → on-demand rules, pause, the switch-back verdict, `privatedns://` parsing, `.mobileconfig` generation |
+| `Sources/DNSChangerCore` | Platform-independent logic: presets and provider info, hostname and NextDNS validation, settings, toggle cycling, per-network settings → on-demand rules and provider switches, pause, the update check and update scripts, the switch-back verdict, `privatedns://` parsing, `.mobileconfig` generation |
 | `Sources/PrivateDNSMenuBar` | The app: menu, Settings window, the two DNS backends, resolver probes, network monitor |
 | `Tests/DNSChangerCoreTests` | XCTest unit tests for the core |
 | `Resources` | `Info.plist` (the version lives here) and the entitlements template used by `scripts/build-app.sh` |

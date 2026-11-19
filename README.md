@@ -9,7 +9,7 @@
 A small Mac menu bar app that turns on DNS over TLS for every app on your Mac, with a provider you choose in advance, in one click. Your Wi-Fi, your ISP and the hotel network stop seeing every site you look up. 
 It's the "cousin" version for macOS of [Private DNS Changer](https://github.com/neteinstein/Private-DNS-Changer) for Android.
 
-[![Version 0.1.0](https://img.shields.io/badge/version-0.1.0-2563EB)](Resources/Info.plist)
+[![Version 0.2.0](https://img.shields.io/badge/version-0.2.0-2563EB)](Resources/Info.plist)
 [![CI](https://github.com/neteinstein/MacOS-MenuBar-DNS-Changer/actions/workflows/ci.yml/badge.svg)](https://github.com/neteinstein/MacOS-MenuBar-DNS-Changer/actions/workflows/ci.yml)
 ![macOS 13+](https://img.shields.io/badge/macOS-13%2B-111?logo=apple&logoColor=white)
 [![Homebrew tap](https://img.shields.io/badge/homebrew-neteinstein%2Ftap-FBB040?logo=homebrew&logoColor=white)](https://github.com/neteinstein/homebrew-tap)
@@ -85,10 +85,11 @@ Encrypted DNS fixes that, but on a Mac it hides behind configuration profiles an
 - **Tells you who runs each one:** the operator, where it's based, what it blocks and how it treats your data, with links to its website and privacy policy.
 - **Favourites:** star providers to list them at the top of the menu. With *Toggle cycles through favourites* on, Toggle steps through them and then Off.
 - **Pauses** for 5 minutes, 15 minutes or an hour, then turns itself back on.
-- **Network rules:** keep it off on any Wi-Fi, on Ethernet, or on Wi-Fi networks you name. macOS applies them itself, even while the app is closed.
+- **Settings per Wi-Fi network:** give each network its own section in Settings › Wi-Fi networks. Turn Private DNS off there (a hotel sign-in page, an office's internal names), which macOS applies itself even while the app is closed, or use a different provider there, which the app switches to when you join and back when you leave. Off on any other Wi-Fi or on Ethernet too, if you like.
 - **Switches back if a provider doesn't answer:** after a switch it checks the new provider resolves names, and restores the previous setting if it doesn't within about 20 seconds.
 - **Scriptable:** `privatedns://on`, `off`, `toggle`, `pause` and `resume` links for Shortcuts, Raycast or Terminal, protected by a token, so a web page can't change your DNS.
 - **Opens at login**, if you like.
+- **Keeps itself up to date:** it checks GitHub once a day, and Settings › About shows the version and an **Update** button (Homebrew runs in Terminal; the DMG downloads the new one).
 
 More in [How it works](docs/how-it-works.md).
 
@@ -99,8 +100,9 @@ More in [How it works](docs/how-it-works.md).
 | Your DNS lookups (the names of the sites and services your Mac connects to), encrypted | The provider you picked | While Private DNS is on. That's the point: pick a provider whose privacy policy you're happy with; each one's is a click away in the menu. |
 | One lookup of the provider's own hostname, e.g. `dns.quad9.net` | Whatever DNS your Mac is using at that moment | Just before each switch, to find the provider's addresses. |
 | Lookups of `www.apple.com`, `www.wikipedia.org`, `www.icloud.com` or `www.google.com` | The provider in use | A few times after a switch, then every two minutes, to check it's answering. |
+| One request for the newest version number | GitHub, over HTTPS | Once a day, and when you click **Check for updates** in Settings › About. GitHub sees your IP address, nothing else. |
 
-Nothing else goes anywhere: the app has no server, no analytics and no crash reporting. Your settings and automation token stay in the app's preferences on your Mac, and the profiles it makes stay in `~/Library/Application Support/PrivateDNSMenuBar/`.
+Nothing else goes anywhere: the app has no server, no analytics and no crash reporting. If you allow Location Services (only needed for Wi-Fi networks with a provider of their own), the app uses it to read the Wi-Fi network's name and nothing else: macOS hides that name from apps without it. Your settings and automation token stay in the app's preferences on your Mac, and the profiles it makes stay in `~/Library/Application Support/PrivateDNSMenuBar/`.
 
 ## Install
 
@@ -154,7 +156,7 @@ Found a bug, or have an idea? [Open an issue](https://github.com/neteinstein/Mac
 ## Learn more
 
 - [Install Private DNS](docs/download.md): the DMG, step by step.
-- [How it works](docs/how-it-works.md): the two ways it changes DNS, network rules, the connection check, pause, automation links, and how it differs from the Android app.
+- [How it works](docs/how-it-works.md): the two ways it changes DNS, settings per Wi-Fi network, updates, the connection check, pause, automation links, and how it differs from the Android app.
 - [Development](docs/development.md): building, signing with the Network Extension entitlement, how the code is laid out, and the demo video.
 - [Releasing](docs/releasing.md): the DMG on GitHub Releases and the Homebrew formula.
 

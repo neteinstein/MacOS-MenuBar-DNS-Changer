@@ -30,9 +30,22 @@ Both methods give macOS the same thing, the equivalent of Android's *Private DNS
 | Server addresses | the hostname's IPv4 and IPv6 addresses, looked up just before the switch (and remembered, in case the lookup fails later) |
 | On-demand rules | your network rules, then "use it everywhere else"; or a single "never" rule for Off |
 
-## Network rules
+## Settings per Wi-Fi network
 
-Rules are on-demand rules of the DNS configuration, so macOS evaluates them on every network change, can match Wi-Fi networks by name (without the Location Services access an app would need), and doesn't need the app to be running. The first rule that matches wins: named Wi-Fi networks, then any Wi-Fi, then Ethernet, then "use encrypted DNS".
+Settings › Wi-Fi networks has a section per network, like Calendar Hub's section per calendar. Each network either turns Private DNS **off** or uses **a provider of its own**:
+
+- **Off** becomes an on-demand rule of the DNS configuration, so macOS applies it on every network change, matches the network by name itself, and doesn't need the app to be running or any permission.
+- **A provider of its own** is a switch the app makes when the Mac joins the network: it remembers the provider in use, switches, and switches back when you leave, unless you picked another provider by hand in the meantime. It needs the app running, the Network Extension build (with profiles, every switch would be a profile to install), and Location Services access, because macOS 14 and later only tell apps the Wi-Fi network's name with it. If one of these is missing, the section says what to do.
+
+*Everywhere else* can also turn it off on any other Wi-Fi network and on Ethernet. The rules macOS sees, first match wins: networks set to off, networks with a provider of their own (kept on), any other Wi-Fi, Ethernet, then "use encrypted DNS".
+
+## Updates
+
+Once a day, and from **Check for updates** in Settings › About, the app asks GitHub for the newest version: for a Homebrew install, the version the tap serves (what `brew upgrade` installs); otherwise the latest release, or the version on `main` before there is one. When there's a newer one, the menu shows **Update to Version …** and About shows **Update…**:
+
+- **Homebrew:** Terminal opens and runs `brew update` and `brew upgrade macos-dns-changer`, then restarts the app (with `launchctl kickstart` under `brew services`). If Homebrew belongs to another account, it runs as that account and asks for its password.
+- **DMG:** the browser downloads the new `Private-DNS.dmg`; drag it into Applications.
+- **Source build:** Terminal pulls, rebuilds and reopens it, while the app is still in its clone's `build` folder.
 
 ## The connection check
 
@@ -68,6 +81,6 @@ Links without the right token, or while automation is off, are ignored, so a web
 ## Differences from the Android app
 
 - **No "Automatic" mode.** Android's opportunistic mode has no macOS equivalent; Off uses your network's DNS servers.
-- **No VPN rule.** On-demand rules match Wi-Fi, Ethernet and Wi-Fi network names; in exchange, Wi-Fi networks can be matched by name.
+- **No VPN rule.** Rules match Wi-Fi networks by name, any Wi-Fi and Ethernet; in exchange, each Wi-Fi network can have its own setting.
 - **No widget or Quick Settings tile:** the menu bar icon is both. It shows a shield while encrypted DNS is in use, an open lock when it's off, a pause sign while paused, and a warning when the provider isn't answering or isn't in use yet.
 - English only for now.

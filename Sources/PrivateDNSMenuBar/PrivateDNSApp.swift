@@ -6,11 +6,13 @@ import SwiftUI
 struct PrivateDNSApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var model = AppModel.shared
+    @StateObject private var updates = UpdateChecker.shared
 
     var body: some Scene {
         MenuBarExtra {
             MenuContent()
                 .environmentObject(model)
+                .environmentObject(updates)
         } label: {
             Image(systemName: model.menuBarSymbol)
                 .accessibilityLabel(model.menuBarAccessibilityLabel)
@@ -20,6 +22,7 @@ struct PrivateDNSApp: App {
         Settings {
             SettingsView()
                 .environmentObject(model)
+                .environmentObject(updates)
         }
     }
 }

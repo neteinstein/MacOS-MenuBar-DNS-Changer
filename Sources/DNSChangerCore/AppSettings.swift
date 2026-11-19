@@ -39,6 +39,8 @@ public struct AppSettings: Hashable, Codable, Sendable {
     public var automationEnabled: Bool = false
     public var automationToken: String = AppSettings.newToken()
     public var pause: PauseState?
+    /// The provider to go back to after leaving a Wi-Fi network that has its own.
+    public var ruleReturnHost: String?
 
     public init() {}
 
@@ -55,6 +57,7 @@ public struct AppSettings: Hashable, Codable, Sendable {
         automationEnabled = try c.decodeIfPresent(Bool.self, forKey: .automationEnabled) ?? defaults.automationEnabled
         automationToken = try c.decodeIfPresent(String.self, forKey: .automationToken) ?? defaults.automationToken
         pause = try c.decodeIfPresent(PauseState.self, forKey: .pause)
+        ruleReturnHost = try c.decodeIfPresent(String.self, forKey: .ruleReturnHost)
     }
 
     /// Built-in presets followed by custom ones, sorted by name.
