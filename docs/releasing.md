@@ -8,7 +8,8 @@ Private DNS ships two ways, like [Calendar Hub](https://github.com/neteinstein/C
 ## Bumping the version
 
 The version is `CFBundleShortVersionString` (and the `CFBundleVersion` build number) in
-[`Resources/Info.plist`](../Resources/Info.plist).
+[`Resources/Info.plist`](../Resources/Info.plist). Every PR that changes the app bumps the minor
+version (0.3.0 → 0.4.0) and adds 1 to the build number; [`AGENTS.md`](../AGENTS.md) has the rule.
 
 **The disk image is automatic.** Every push to `main` runs [`release.yml`](../.github/workflows/release.yml):
 if there's no release tagged `v<version>` yet, it tests, builds a universal (Apple silicon and Intel)
