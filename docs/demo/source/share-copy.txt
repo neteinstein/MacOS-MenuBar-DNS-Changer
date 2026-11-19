@@ -1,0 +1,1 @@
+Your Mac tells every Wi-Fi network which sites you visit. Private DNS fixes that from the menu bar: one click turns on encrypted DNS with Cloudflare, Quad9, Mullvad or 21 other providers, with pause and per-network rules. Free for macOS 13+: brew install neteinstein/tap/macos-dns-changer

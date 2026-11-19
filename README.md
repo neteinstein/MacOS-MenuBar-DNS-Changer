@@ -1,17 +1,28 @@
-# MacOS-MenuBar-DNS-Changer
+<div align="center">
 
-**Private DNS for the Mac menu bar.** Turn on encrypted DNS (DNS over TLS) with a provider you choose in advance, in one click, for every app on the Mac. This is the macOS version of [Private DNS Changer](https://github.com/neteinstein/Private-DNS-Changer) for Android.
+<img src="docs/icon.png" width="128" height="128" alt="Private DNS app icon">
 
-- **Menu bar toggle:** turn encrypted DNS on with your chosen provider, or off (⌘T while the menu is open).
-- **Providers:** Cloudflare, Google, Quad9, Mullvad, Control D, AdGuard, DNS4EU, DNS.SB, CleanBrowsing, ad-blocking and family filters, a NextDNS configuration ID, or your own DNS-over-TLS hostname. Each built-in one has an *About* panel: who runs it, where it's based, what it blocks, and its privacy policy.
-- **Favourites:** star providers to list them at the top of the menu. With *Toggle cycles through favourites* on, Toggle steps through them and then Off.
-- **Pause:** off for 5 min, 15 min or 1 h, then back on by itself.
-- **Network rules:** keep encrypted DNS off on any Wi-Fi, on Ethernet, or on named Wi-Fi networks (a hotel network with a sign-in page, an office network with internal names). macOS applies them itself, even while the app is closed.
-- **Safe switching:** after a switch the app checks that the new provider answers, and puts the previous setting back if it doesn't. The menu shows whether the provider in use is answering.
-- **Automation:** `privatedns://` links for Shortcuts, scripts and automation apps, protected by a token.
-- **Open at login.**
+# Private DNS
 
-Requires macOS 13 Ventura or later. Built with Swift, SwiftUI (`MenuBarExtra`) and Swift Package Manager; no Xcode project needed.
+**Encrypted DNS from your Mac's menu bar.**
+
+A small Mac menu bar app that turns on DNS over TLS for every app on your Mac, with a provider you choose in advance, in one click. Your Wi-Fi, your ISP and the hotel network stop seeing every site you look up. It's the macOS version of [Private DNS Changer](https://github.com/neteinstein/Private-DNS-Changer) for Android.
+
+[![Version 0.1.0](https://img.shields.io/badge/version-0.1.0-2563EB)](Resources/Info.plist)
+[![CI](https://github.com/neteinstein/MacOS-MenuBar-DNS-Changer/actions/workflows/ci.yml/badge.svg)](https://github.com/neteinstein/MacOS-MenuBar-DNS-Changer/actions/workflows/ci.yml)
+![macOS 13+](https://img.shields.io/badge/macOS-13%2B-111?logo=apple&logoColor=white)
+[![Homebrew tap](https://img.shields.io/badge/homebrew-neteinstein%2Ftap-FBB040?logo=homebrew&logoColor=white)](https://github.com/neteinstein/homebrew-tap)
+[![DMG downloads](https://img.shields.io/github/downloads/neteinstein/MacOS-MenuBar-DNS-Changer/total?label=dmg%20downloads&logo=apple&logoColor=white&color=0EA5E9)](https://github.com/neteinstein/MacOS-MenuBar-DNS-Changer/releases)
+
+<a href="https://github.com/neteinstein/MacOS-MenuBar-DNS-Changer/raw/main/docs/private-dns.mp4">
+  <img src="docs/demo.webp" width="860" alt="Private DNS demo: DNS lookups stream past in plain text; one click on the menu bar lock turns on Cloudflare and they become ciphertext; the Providers menu picks Quad9 and shows who runs it; Pause for 15 minutes and a network rule for Hotel Wi-Fi; a privatedns:// link from Terminal">
+</a>
+
+<sub>▶ <a href="https://github.com/neteinstein/MacOS-MenuBar-DNS-Changer/raw/main/docs/private-dns.mp4">Watch with sound</a> · 22 seconds</sub>
+
+</div>
+
+---
 
 ## How to install
 
@@ -31,103 +42,122 @@ brew trust --formula neteinstein/tap/macos-dns-changer
 brew services start neteinstein/tap/macos-dns-changer
 ```
 
-The first command builds the app on your Mac (it needs the Xcode command line tools) and installs it. The second marks the formula as trusted, since recent Homebrew versions won't run formula code from a third-party tap until you say you trust it. The third starts it now and at every login; to start it once instead, run `open "$(brew --prefix)/opt/macos-dns-changer/Private DNS.app"`.
+The first command builds the app on your Mac and installs it. The second marks it as trusted, since recent Homebrew versions won't run formula code from a third-party tap until you say you trust it. The third starts it now and at every login. It needs macOS 13 or later; more in [Install](#install).
 
-Update with `brew update && brew upgrade macos-dns-changer`, then `brew services restart macos-dns-changer`.
+## Why
 
-Both the disk image and Homebrew give you an app that isn't signed by Apple, so it uses [configuration profiles](#configuration-profiles-any-build) to switch DNS.
+Your Mac asks a DNS server for the address of every site and app it talks to, and by default it asks in plain text. Whoever runs the network (the café Wi-Fi, the hotel, your ISP) can read the list, and can change the answers.
 
-## Setup
+Encrypted DNS fixes that, but on a Mac it hides behind configuration profiles and Network Extension settings. Private DNS puts it in the menu bar: pick a provider once, then it's one click to turn on, off, pause, or switch.
 
-macOS only lets an app change the system DNS with Apple's permission, in one of two ways. The app picks the right one by itself.
+## A look around
 
-### Network Extension (instant switching)
+<table>
+<tr>
+<td width="50%" valign="top">
+<img src="docs/look/menu.webp" alt="The menu with Private DNS: Cloudflare and Provider is answering, next to a log of DNS lookups that are now encrypted">
+<b>One click.</b> <b>Turn On</b> uses the provider you picked. The menu shows who's in use and whether it's answering.
+</td>
+<td width="50%" valign="top">
+<img src="docs/look/providers.webp" alt="Providers, Standard: Cloudflare, Google, Quad9, Mullvad, Control D, AdGuard, DNS4EU, DNS.SB, Quad9 ECS">
+<b>24 providers</b>, standard, ad and malware blocking, and family filters, plus NextDNS and your own hostname.
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<img src="docs/look/about.webp" alt="About Quad9: dns.quad9.net, run by Quad9 Foundation, Switzerland, what it blocks and how it treats your data">
+<b>Know who runs it.</b> Each provider's operator, country, what it blocks and its privacy policy.
+</td>
+<td width="50%" valign="top">
+<img src="docs/look/pause-rules.webp" alt="Private DNS paused with 15 minutes left, and a network rule that turns it off on Hotel Wi-Fi">
+<b>Pause</b> for a hotel sign-in page, or let a <b>network rule</b> turn it off on the networks that need their own DNS.
+</td>
+</tr>
+</table>
 
-A build signed with the `dns-settings` Network Extension entitlement uses [`NEDNSSettingsManager`](https://developer.apple.com/documentation/networkextension/nednssettingsmanager). Like the one-time `adb shell pm grant` on Android, macOS asks once:
+<sub>Pictures from the demo video, which draws the app's own menu in the macOS style.</sub>
 
-1. Open the app and pick a provider.
-2. In **System Settings → Network → Filters** (*VPN & Filters* on macOS 13–14), turn on **Private DNS Menu Bar**. The menu shows *Allow in System Settings…* until you do.
+## What it does
 
-After that, every switch is instant and needs no password. Turning it off keeps the configuration but tells macOS not to use it, so you don't have to allow it again.
+- **Turns encrypted DNS on and off** from the menu bar, or with ⌘T while the menu is open: DNS over TLS for every app on the Mac, not just the browser.
+- **Offers 24 providers:** Cloudflare, Google, Quad9, Mullvad, Control D, AdGuard, DNS4EU, DNS.SB and CleanBrowsing, with their ad-blocking and family filters. Add a **NextDNS** configuration ID or any DNS-over-TLS hostname of your own, with a name.
+- **Tells you who runs each one:** the operator, where it's based, what it blocks and how it treats your data, with links to its website and privacy policy.
+- **Favourites:** star providers to list them at the top of the menu. With *Toggle cycles through favourites* on, Toggle steps through them and then Off.
+- **Pauses** for 5 minutes, 15 minutes or an hour, then turns itself back on.
+- **Network rules:** keep it off on any Wi-Fi, on Ethernet, or on Wi-Fi networks you name. macOS applies them itself, even while the app is closed.
+- **Switches back if a provider doesn't answer:** after a switch it checks the new provider resolves names, and restores the previous setting if it doesn't within about 20 seconds.
+- **Scriptable:** `privatedns://on`, `off`, `toggle`, `pause` and `resume` links for Shortcuts, Raycast or Terminal, protected by a token, so a web page can't change your DNS.
+- **Opens at login**, if you like.
 
-### Configuration profiles (any build)
+More in [How it works](docs/how-it-works.md).
 
-A build without the entitlement (for example one you build yourself without a paid Apple developer account) writes a `.mobileconfig` with a `DNSSettings` payload for each switch and hands it to macOS. Install it in **System Settings → Privacy & Security → Profiles** (double-click it, then *Install…*). All profiles share one identifier, so each new one replaces the previous one; *Off* installs a profile that tells macOS not to use encrypted DNS. You can also remove the profile there.
+## What leaves your Mac, and where it ends up
 
-## How it works
+| What | Where it ends up | When |
+|---|---|---|
+| Your DNS lookups (the names of the sites and services your Mac connects to), encrypted | The provider you picked | While Private DNS is on. That's the point: pick a provider whose privacy policy you're happy with; each one's is a click away in the menu. |
+| One lookup of the provider's own hostname, e.g. `dns.quad9.net` | Whatever DNS your Mac is using at that moment | Just before each switch, to find the provider's addresses. |
+| Lookups of `www.apple.com`, `www.wikipedia.org`, `www.icloud.com` or `www.google.com` | The provider in use | A few times after a switch, then every two minutes, to check it's answering. |
 
-Both methods give macOS the same thing, the equivalent of Android's *Private DNS provider hostname*:
+Nothing else goes anywhere: the app has no server, no analytics and no crash reporting. Your settings and automation token stay in the app's preferences on your Mac, and the profiles it makes stay in `~/Library/Application Support/PrivateDNSMenuBar/`.
 
-| Setting | Value |
-| --- | --- |
-| Protocol | DNS over TLS (port 853) |
-| Server name | the provider hostname, e.g. `dns.google`, checked against its TLS certificate |
-| Server addresses | the hostname's IPv4 and IPv6 addresses, looked up just before the switch (and remembered, in case the lookup fails later) |
-| On-demand rules | your network rules, then "use it everywhere else"; or a single "never" rule for Off |
+## Install
 
-**Network rules** are on-demand rules, so macOS evaluates them on every network change, can match Wi-Fi networks by name, and doesn't need the app to be running.
-
-**The connection check** looks up a few well-known names through the system resolver after a switch. If none of them resolves within about 20 seconds while the Mac is online, the app restores the previous setting and shows a notification. Being offline never counts against the provider. It only runs with the Network Extension method; with profiles, the switch waits for you in System Settings.
-
-## Automation
-
-Turn on *Allow automation* in Settings → Automation and copy your token. Then open links like these, from Shortcuts (*Open URLs*), a script, Raycast, Alfred, Keyboard Maestro and so on:
-
-| Link | Does |
-| --- | --- |
-| `privatedns://on?token=…` | On, with your provider |
-| `privatedns://on?token=…&host=dns.quad9.net` | On, with this hostname |
-| `privatedns://off?token=…` | Off |
-| `privatedns://toggle?token=…` | Same as the menu's toggle |
-| `privatedns://pause?token=…&minutes=30` | Pause (1 to 1440 minutes, default 15) |
-| `privatedns://resume?token=…` | End a pause now |
+With [Homebrew](https://brew.sh/):
 
 ```bash
-open "privatedns://pause?minutes=10&token=YOUR_TOKEN"
+brew install neteinstein/tap/macos-dns-changer
 ```
 
-Links without the right token, or while automation is off, are ignored, so a web page can't change your DNS. *New token* invalidates the old one.
+It needs macOS 13 or later and the Xcode command line tools: Homebrew builds the app on your Mac. No Terminal? [Download](#download) the app instead.
 
-## Build
+### Run it
+
+Start it once:
 
 ```bash
-swift test                 # unit tests for presets, rules, pause, automation and profiles
-swift run PrivateDNSMenuBar  # quick run from the terminal (profile mode; no notifications)
-scripts/build-app.sh       # "build/Private DNS.app" for this Mac, ad-hoc signed
-UNIVERSAL=1 scripts/build-app.sh && scripts/make-dmg.sh   # Apple silicon + Intel, build/Private-DNS.dmg
+open "$(brew --prefix)/opt/macos-dns-changer/Private DNS.app"
 ```
 
-Requires Xcode 15 or later (Swift 5.9) or its command line tools (`UNIVERSAL=1` needs full Xcode). The ad-hoc signed app uses configuration profiles.
+Or start it now and at every login:
 
-Releases (the disk image on GitHub Releases and the Homebrew formula in `neteinstein/homebrew-tap`) are described in [Releasing](docs/releasing.md).
+```bash
+brew services start neteinstein/tap/macos-dns-changer
+```
 
-### Signing with the Network Extension entitlement
+Use `brew services` rather than **Open at login** in Settings: the service runs the app from Homebrew's `opt` folder, which keeps pointing at the newest version after `brew upgrade`.
 
-1. In your Apple Developer account, create an App ID (e.g. `org.example.privatedns`) with the **Network Extensions** capability.
-2. Create a **Developer ID** (or Mac Development) provisioning profile for it and download it.
-3. Build and sign:
+### Download
 
-   ```bash
-   SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" TEAM_ID=TEAMID BUNDLE_ID=org.example.privatedns PROVISIONING_PROFILE=~/Downloads/PrivateDNS.provisionprofile ./scripts/build-app.sh
-   ```
+No Homebrew or Terminal needed: [Install Private DNS](docs/download.md) walks through downloading [Private-DNS.dmg](https://github.com/neteinstein/MacOS-MenuBar-DNS-Changer/releases/latest/download/Private-DNS.dmg), dragging it into Applications and allowing it the first time (it isn't signed by Apple).
 
-4. Optionally pack it with `scripts/make-dmg.sh`, notarize `build/Private-DNS.dmg` with `xcrun notarytool submit --wait` and staple it.
+### Set it up
 
-## Project layout
+1. Click the lock in the menu bar, open **Providers** and pick one.
+2. macOS asks you to install the profile that switches DNS: open **System Settings › Privacy & Security › Profiles**, double-click **Private DNS: <provider>** and click **Install**.
 
-| Path | What |
-| --- | --- |
-| `Sources/DNSChangerCore` | Platform-independent logic: presets and provider info, hostname and NextDNS validation, settings, toggle cycling, network rules → on-demand rules, pause, the switch-back verdict, `privatedns://` parsing, `.mobileconfig` generation |
-| `Sources/PrivateDNSMenuBar` | The app: menu, Settings window, the two DNS backends, resolver probes, network monitor |
-| `Tests/DNSChangerCoreTests` | XCTest unit tests for the core |
-| `Resources` | `Info.plist` (the version lives here) and the entitlements template used by `scripts/build-app.sh` |
-| `scripts` | `build-app.sh` builds the app, `make-dmg.sh` packs the disk image |
-| `packaging/homebrew` | The source copy of the tap's `macos-dns-changer` formula |
-| `.github/workflows` | `ci.yml` (tests and builds on every push), `release.yml` (publishes the disk image for each new version on `main`) |
+Both the DMG and Homebrew give you an app that isn't signed by Apple, so every switch is a profile to install. A build signed with Apple's Network Extension entitlement switches instantly after you allow it once in **System Settings › Network › Filters**; see [How it works](docs/how-it-works.md#two-ways-to-change-the-system-dns) and [Development](docs/development.md#signing-with-the-network-extension-entitlement).
 
-## Differences from the Android app
+### Update
 
-- **No "Automatic" mode.** Android's opportunistic mode has no macOS equivalent; Off uses your network's DNS servers.
-- **No VPN rule.** On-demand rules match Wi-Fi, Ethernet and Wi-Fi network names; in exchange, Wi-Fi networks can be matched by name.
-- **No widget or Quick Settings tile:** the menu bar icon is both. It shows a closed lock while encrypted DNS is in use, an open lock when it's off, a pause sign while paused, and a warning when the provider isn't answering or isn't in use yet.
-- English only for now.
+```bash
+brew update && brew upgrade macos-dns-changer
+```
+
+Then restart it with `brew services restart macos-dns-changer`, or quit it from its menu and open it again. With the DMG, download the new one and replace the app in Applications. Your settings are kept.
+
+## Feedback and issues
+
+Found a bug, or have an idea? [Open an issue](https://github.com/neteinstein/MacOS-MenuBar-DNS-Changer/issues).
+
+## Learn more
+
+- [Install Private DNS](docs/download.md): the DMG, step by step.
+- [How it works](docs/how-it-works.md): the two ways it changes DNS, network rules, the connection check, pause, automation links, and how it differs from the Android app.
+- [Development](docs/development.md): building, signing with the Network Extension entitlement, how the code is laid out, and the demo video.
+- [Releasing](docs/releasing.md): the DMG on GitHub Releases and the Homebrew formula.
+
+<div align="center">
+<br>
+<sub>Demo video made with <a href="https://github.com/latent-spaces/brag">/brag</a>.</sub>
+</div>

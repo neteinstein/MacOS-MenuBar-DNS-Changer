@@ -1,0 +1,431 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<!--
+  The /brag scene for the README video. Every frame is a pure function of time:
+  render(t) sets the whole page for t seconds. render.mjs captures it at 30 fps.
+  The menu is the app's own MenuContent (same items and strings), drawn in the macOS
+  menu style, since the SwiftUI app can't render off a Mac.
+-->
+<style>
+  :root {
+    --navy: #0B1020; --navy2: #141c38; --blue: #0A84FF; --green: #30D158;
+    --ink: #1d1d1f; --grey: #86868b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--navy); }
+  body { font-family: Inter, sans-serif; color: white; -webkit-font-smoothing: antialiased; }
+  .layer { position: absolute; inset: 0; }
+  .mono { font-family: "JetBrains Mono", monospace; }
+
+  /* Scene 1: the plain-text stream */
+  #hook { background: radial-gradient(1200px 700px at 50% 55%, #18224a 0%, var(--navy) 70%); }
+  #stream { position: absolute; inset: 0; overflow: hidden; }
+  .col { position: absolute; top: 0; width: 420px; font-size: 30px; line-height: 64px; color: #7f8fb8; white-space: nowrap; }
+  .col span.q { color: #b9c6ea; }
+  .col .tag { color: #4c5a84; font-size: 22px; margin-right: 14px; }
+  #hookTitle { position: absolute; left: 0; right: 0; top: 410px; text-align: center; font-weight: 800;
+    font-size: 96px; letter-spacing: -2px; line-height: 1.08; text-shadow: 0 6px 40px rgba(0,0,0,.8); }
+  #hookTitle em { font-style: normal; color: #ff9f0a; }
+  #hookSub { position: absolute; left: 0; right: 0; top: 640px; text-align: center; font-size: 34px; color: #9aa6c9; }
+  #hookShade { position: absolute; left: 120px; right: 120px; top: 300px; height: 480px;
+    background: radial-gradient(closest-side, rgba(11,16,32,.97) 55%, rgba(11,16,32,0)); }
+
+  /* Desktop scenes */
+  #desk { background: linear-gradient(135deg, #1b2b6b 0%, #4a2f8f 45%, #b0507a 100%); }
+  #glow { position: absolute; width: 1400px; height: 1400px; left: -300px; top: -200px;
+    background: radial-gradient(closest-side, rgba(10,132,255,.35), rgba(10,132,255,0)); }
+  #menubar { position: absolute; left: 0; right: 0; top: 0; height: 50px; background: rgba(246,246,248,.78);
+    backdrop-filter: blur(20px); display: flex; align-items: center; color: var(--ink); font-size: 24px; font-weight: 500;
+    box-shadow: 0 1px 0 rgba(0,0,0,.12); }
+  #menubar .left { display: flex; gap: 34px; padding-left: 28px; align-items: center; }
+  #menubar .left b { font-weight: 700; }
+  #menubar .right { position: absolute; right: 26px; top: 0; height: 50px; display: flex; align-items: center; gap: 30px; }
+  #ourIcon { position: absolute; left: 1362px; top: 5px; width: 52px; height: 40px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center; }
+  #ourIcon svg { width: 30px; height: 30px; }
+  #ring { position: absolute; left: 1388px; top: 25px; width: 10px; height: 10px; border-radius: 50%;
+    border: 4px solid var(--green); transform: translate(-50%,-50%); opacity: 0; }
+
+  .menu { position: absolute; width: 520px; padding: 8px; border-radius: 16px; background: rgba(244,244,247,.86);
+    backdrop-filter: blur(28px) saturate(1.6); color: var(--ink); font-size: 25px;
+    box-shadow: 0 0 0 1px rgba(0,0,0,.12), 0 24px 60px rgba(0,0,0,.35); }
+  .item { height: 46px; padding: 0 18px 0 46px; display: flex; align-items: center; border-radius: 9px; position: relative; white-space: nowrap; }
+  .item.dis { color: var(--grey); }
+  .item.hi { background: var(--blue); color: white; }
+  .item .chk { position: absolute; left: 16px; font-size: 22px; }
+  .item .sc { margin-left: auto; color: var(--grey); padding-left: 24px; }
+  .item.hi .sc { color: rgba(255,255,255,.8); }
+  .item .arr { margin-left: auto; font-size: 20px; color: var(--grey); }
+  .item.hi .arr { color: white; }
+  .sep { height: 1px; margin: 6px 12px; background: rgba(0,0,0,.12); }
+  .item.wrap { height: auto; min-height: 46px; white-space: normal; padding-top: 7px; padding-bottom: 7px; line-height: 1.3; }
+
+  #cursor { position: absolute; width: 40px; height: 56px; left: 0; top: 0; z-index: 50; filter: drop-shadow(0 2px 3px rgba(0,0,0,.4)); }
+
+  .caption { position: absolute; left: 120px; width: 900px; font-weight: 800; font-size: 84px; letter-spacing: -2px; line-height: 1.06;
+    text-shadow: 0 6px 30px rgba(0,0,0,.35); }
+  .caption small { display: block; font-size: 34px; font-weight: 500; letter-spacing: 0; margin-top: 22px; color: rgba(255,255,255,.82); line-height: 1.35; }
+
+  #log { position: absolute; left: 120px; top: 520px; width: 900px; height: 420px; border-radius: 22px; padding: 26px 32px;
+    background: rgba(8,12,28,.72); box-shadow: 0 20px 60px rgba(0,0,0,.35); overflow: hidden; }
+  #log .hdr { font-size: 22px; color: #8ea0d0; margin-bottom: 14px; font-family: Inter; font-weight: 600; letter-spacing: .5px; display: flex; }
+  #log .hdr .st { margin-left: auto; }
+  #log .ln { font-size: 28px; line-height: 50px; color: #cfd8f5; white-space: nowrap; }
+  #log .ln .p { color: #5f6f9c; display: inline-block; width: 120px; }
+
+  #rule { position: absolute; left: 120px; top: 600px; width: 780px; border-radius: 22px; background: rgba(246,246,248,.94);
+    color: var(--ink); padding: 26px 32px; font-size: 26px; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+  #rule .t { font-weight: 700; font-size: 22px; color: var(--grey); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  #rule .row { display: flex; align-items: center; height: 54px; border-bottom: 1px solid rgba(0,0,0,.08); }
+  #rule .row:last-child { border-bottom: 0; }
+  #rule .sw { margin-left: auto; width: 62px; height: 36px; border-radius: 18px; background: #d1d1d6; position: relative; }
+  #rule .sw.on { background: var(--green); }
+  #rule .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 30px; height: 30px; border-radius: 50%; background: white; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+  #rule .sw.on::after { left: 29px; }
+  #rule .wifi { margin-left: auto; color: var(--grey); font-size: 24px; }
+
+  #term { position: absolute; left: 120px; top: 560px; width: 1000px; border-radius: 18px; overflow: hidden;
+    box-shadow: 0 24px 70px rgba(0,0,0,.45); background: #15161c; }
+  #term .bar { height: 46px; background: #2a2b33; display: flex; align-items: center; padding-left: 18px; gap: 10px; }
+  #term .bar i { width: 15px; height: 15px; border-radius: 50%; display: block; }
+  #term .bar span { margin-left: 330px; color: #9a9aa5; font-size: 20px; }
+  #term .body { padding: 26px 30px 34px; font-size: 30px; color: #e6e6ef; min-height: 150px; }
+  #term .pr { color: var(--green); }
+  #term .caret { display: inline-block; width: 16px; height: 34px; background: #e6e6ef; vertical-align: -6px; }
+
+  /* Outro */
+  #outro { background: radial-gradient(1100px 700px at 50% 40%, #1d2a5e 0%, var(--navy) 72%); }
+  #appIcon { position: absolute; left: 50%; top: 150px; width: 220px; height: 220px; margin-left: -110px; }
+  #oTitle { position: absolute; left: 0; right: 0; top: 400px; text-align: center; font-size: 120px; font-weight: 800; letter-spacing: -3px; }
+  #oSub { position: absolute; left: 0; right: 0; top: 548px; text-align: center; font-size: 40px; color: #b8c3e6; }
+  #oCmd { position: absolute; left: 50%; top: 668px; transform: translateX(-50%); padding: 22px 40px; border-radius: 18px;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16); font-size: 38px; white-space: nowrap; }
+  #oCmd .d { color: var(--green); }
+  #oMeta { position: absolute; left: 0; right: 0; top: 806px; text-align: center; font-size: 32px; color: #8e9bc4; }
+</style>
+</head>
+<body>
+
+<div id="hook" class="layer">
+  <div id="stream"></div>
+  <div id="hookShade"></div>
+  <div id="hookTitle">Your Wi-Fi can read<br>every site you visit.</div>
+  <div id="hookSub">DNS lookups leave your Mac in plain text.</div>
+</div>
+
+<div id="desk" class="layer">
+  <div id="glow"></div>
+  <div id="menubar">
+    <div class="left">
+      <svg width="24" height="28" viewBox="0 0 24 28"><path fill="#1d1d1f" d="M19.6 14.9c0-3.1 2.5-4.6 2.6-4.7-1.4-2.1-3.7-2.4-4.5-2.4-1.9-.2-3.7 1.1-4.7 1.1-1 0-2.5-1.1-4.1-1-2.1 0-4 1.2-5.1 3.1-2.2 3.8-.6 9.4 1.6 12.4 1 1.5 2.3 3.2 3.9 3.1 1.6-.1 2.2-1 4.1-1s2.4 1 4.1 1c1.7 0 2.8-1.5 3.8-3 1.2-1.7 1.7-3.4 1.7-3.5 0 0-3.3-1.3-3.3-5.1zM16.5 5.8c.9-1 1.4-2.5 1.3-3.9-1.2.1-2.7.8-3.6 1.8-.8.9-1.5 2.4-1.3 3.8 1.4.1 2.7-.7 3.6-1.7z"/></svg>
+      <b>Finder</b><span>File</span><span>Edit</span><span>View</span><span>Go</span><span>Window</span><span>Help</span>
+    </div>
+    <div class="right">
+      <svg width="30" height="22" viewBox="0 0 30 22"><path fill="none" stroke="#1d1d1f" stroke-width="2.6" stroke-linecap="round" d="M3 8a17 17 0 0 1 24 0M7.5 12.5a10.5 10.5 0 0 1 15 0M12 17a4 4 0 0 1 6 0"/></svg>
+      <svg width="40" height="20" viewBox="0 0 40 20"><rect x="1" y="2" width="33" height="16" rx="4.5" fill="none" stroke="#1d1d1f" stroke-width="2" opacity=".5"/><rect x="4" y="5" width="24" height="10" rx="2.5" fill="#1d1d1f"/><rect x="36" y="7" width="2.5" height="6" rx="1" fill="#1d1d1f" opacity=".5"/></svg>
+      <span>Thu 9:41</span>
+    </div>
+    <div id="ourIcon"></div>
+  </div>
+  <div id="ring"></div>
+
+  <div id="cap2" class="caption" style="top:150px"></div>
+  <div id="log"><div class="hdr"><span>DNS LOOKUPS ON THIS NETWORK</span><span class="st" id="logState"></span></div><div id="logLines"></div></div>
+  <div id="rule">
+    <div class="t">Networks</div>
+    <div class="row">Use network rules<div class="sw on"></div></div>
+    <div class="row">Turn off on these Wi-Fi networks<span class="wifi">Hotel Wi-Fi</span></div>
+  </div>
+  <div id="term">
+    <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span>Terminal</span></div>
+    <div class="body mono"><span class="pr">~ %</span> <span id="typed"></span><span class="caret" id="caret"></span></div>
+  </div>
+  <div id="menus"></div>
+  <svg id="cursor" viewBox="0 0 20 28"><path d="M2 1 L2 22 L7 17.5 L10.5 26 L14 24.5 L10.5 16.2 L17 16.2 Z" fill="#000" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+</div>
+
+<div id="outro" class="layer">
+  <div id="appIcon"></div>
+  <div id="oTitle">Private DNS</div>
+  <div id="oSub">Encrypted DNS from your Mac's menu bar.</div>
+  <div id="oCmd" class="mono"><span class="d">$</span> brew install neteinstein/tap/macos-dns-changer</div>
+  <div id="oMeta">or download Private-DNS.dmg &nbsp;·&nbsp; macOS 13+ &nbsp;·&nbsp; free</div>
+</div>
+
+<div id="flash" class="layer" style="background:#000;opacity:0;pointer-events:none"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const ease = (k) => { k = clamp(k); return k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; };
+const out = (k) => { k = clamp(k); return 1 - Math.pow(1 - k, 3); };
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+// Deterministic pseudo-random, so frames don't depend on render order.
+const rnd = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+
+// ---------- icons ----------
+const ICON = {
+  open: `<svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="11" rx="2.6" fill="#1d1d1f"/><path d="M8 11V7.5a4 4 0 0 1 7.6-1.8" fill="none" stroke="#1d1d1f" stroke-width="2.4" stroke-linecap="round"/></svg>`,
+  shield: `<svg viewBox="0 0 24 24"><path d="M12 1.5 21 5v6.5c0 5.4-3.8 9.5-9 11-5.2-1.5-9-5.6-9-11V5z" fill="#1d1d1f"/><rect x="8" y="11" width="8" height="6.5" rx="1.4" fill="#fff"/><path d="M9.6 11V9.2a2.4 2.4 0 0 1 4.8 0V11" fill="none" stroke="#fff" stroke-width="1.6"/></svg>`,
+  pause: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="none" stroke="#1d1d1f" stroke-width="2.2"/><rect x="8.6" y="7.5" width="2.4" height="9" rx="1" fill="#1d1d1f"/><rect x="13" y="7.5" width="2.4" height="9" rx="1" fill="#1d1d1f"/></svg>`,
+};
+const APP_ICON = `<svg viewBox="0 0 220 220"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3a8dff"/><stop offset="1" stop-color="#5b3fd9"/></linearGradient></defs>
+  <rect width="220" height="220" rx="50" fill="url(#g)"/><path d="M110 34 168 57v42c0 35-24.5 61.5-58 71-33.5-9.5-58-36-58-71V57z" fill="#fff"/>
+  <rect x="84" y="98" width="52" height="42" rx="8" fill="#4a62ec"/><path d="M94 98V86a16 16 0 0 1 32 0v12" fill="none" stroke="#4a62ec" stroke-width="9"/></svg>`;
+
+// ---------- the app's menu (MenuContent.swift) ----------
+const STANDARD = ["Cloudflare", "Google", "Quad9", "Mullvad", "Control D", "AdGuard (unfiltered)", "DNS4EU", "DNS.SB", "Quad9 (ECS)"];
+function mainMenu(s) {
+  const items = [];
+  if (s.paused) {
+    items.push({ t: "Private DNS: paused (15 min left)", dis: 1 }, { t: "Resume now", id: "resume" });
+  } else if (!s.on) {
+    items.push({ t: "Private DNS: Off", dis: 1 }, { t: "Turn On (Cloudflare)", sc: "⌘T", id: "turnon" }, { t: "Pause", arr: 1, dis: 1 });
+  } else {
+    items.push({ t: "Private DNS: " + s.name, dis: 1 }, { t: "✓ Provider is answering", dis: 1 }, { t: "Turn Off", sc: "⌘T" }, { t: "Pause", arr: 1, id: "pause" });
+  }
+  items.push({ sep: 1 }, { t: "Providers", arr: 1, id: "providers" });
+  if (s.on && !s.paused) items.push({ t: "About " + s.name, arr: 1, id: "about" });
+  items.push({ sep: 1 }, { t: "Settings…", sc: "⌘," }, { t: "Quit Private DNS", sc: "⌘Q" });
+  return items;
+}
+function menuHTML(items, hi, left, top, width) {
+  const rows = items.map((it) => {
+    if (it.sep) return `<div class="sep"></div>`;
+    const cls = ["item", it.dis ? "dis" : "", it.id && it.id === hi ? "hi" : "", it.wrap ? "wrap" : ""].join(" ");
+    return `<div class="${cls}" ${it.id ? `data-id="${it.id}"` : ""}>${it.chk ? '<span class="chk">✓</span>' : ""}${it.t}${it.sc ? `<span class="sc">${it.sc}</span>` : ""}${it.arr ? '<span class="arr">▶</span>' : ""}</div>`;
+  }).join("");
+  return `<div class="menu" style="left:${left}px;top:${top}px;width:${width || 520}px">${rows}</div>`;
+}
+
+// ---------- timeline helpers ----------
+function lookupLines(t, scrambled) {
+  const names = ["github.com", "my-bank.example", "news.ycombinator.com", "clinic-booking.example", "maps.apple.com",
+    "job-search.example", "wikipedia.org", "dating-app.example", "weather.com", "spotify.com"];
+  const lines = [];
+  const step = Math.floor(t * 4);
+  for (let i = 0; i < 7; i++) {
+    const n = names[(step + i) % names.length];
+    const k = clamp((scrambled - i * 0.06) / 0.4);
+    const shown = n.split("").map((c, j) => (rnd(j * 13 + i * 7 + step) < k ? "0123456789abcdef"[Math.floor(rnd(j + i * 31 + step * 3) * 16)] : c)).join("");
+    lines.push(`<div class="ln mono"><span class="p">${k >= 1 ? "TLS:853" : "UDP:53"}</span>${k >= 1 ? "▒".repeat(3) + " " + shown : shown}</div>`);
+  }
+  return lines.join("");
+}
+
+function setCaption(el, html, t, a, b) {
+  el.innerHTML = html;
+  const k = out(prog(t, a, a + 0.35));
+  const kOut = b ? 1 - prog(t, b - 0.2, b) : 1;
+  el.style.opacity = Math.min(k, kOut);
+  el.style.transform = `translateY(${(1 - k) * 30}px)`;
+}
+
+// cursor keyframes per scene: [time, x, y]
+function cursorAt(t, keys) {
+  if (t <= keys[0][0]) return keys[0].slice(1);
+  for (let i = 0; i < keys.length - 1; i++) {
+    const [t0, x0, y0] = keys[i], [t1, x1, y1] = keys[i + 1];
+    if (t <= t1) { const k = ease((t - t0) / (t1 - t0)); return [lerp(x0, x1, k), lerp(y0, y1, k)]; }
+  }
+  return keys[keys.length - 1].slice(1);
+}
+
+const MX = 1370, MY = 56, IH = 46; // main menu origin, item height
+function itemY(items, id) { // centre y of an item in a menu at top MY
+  let y = MY + 8;
+  for (const it of items) {
+    const h = it.sep ? 13 : IH;
+    if (it.id === id) return y + h / 2;
+    y += h;
+  }
+  return y;
+}
+function itemTop(items, id) { return itemY(items, id) - IH / 2 - 8; }
+
+function render(t) {
+  // Scene visibility: dip through the background between scenes.
+  const hookOn = t < 3, outroOn = t >= 18;
+  $("hook").style.display = hookOn ? "block" : "none";
+  $("desk").style.display = !hookOn && !outroOn ? "block" : "none";
+  $("outro").style.display = outroOn ? "block" : "none";
+  let flash = 0;
+  for (const c of [3, 18]) flash = Math.max(flash, 1 - Math.abs(t - c) / 0.18);
+  for (const c of [7.5, 12, 16]) flash = Math.max(flash, 0.5 * (1 - Math.abs(t - c) / 0.12));
+  $("flash").style.opacity = clamp(flash);
+
+  if (hookOn) return renderHook(t);
+  if (outroOn) return renderOutro(t);
+  renderDesk(t);
+}
+
+function renderHook(t) {
+  const names = ["github.com", "my-bank.example", "maps.apple.com", "clinic-booking.example", "news.ycombinator.com", "weather.com",
+    "job-search.example", "wikipedia.org", "spotify.com", "dating-app.example", "mail.example.com", "icloud.com", "youtube.com", "reddit.com"];
+  let html = "";
+  for (let c = 0; c < 5; c++) {
+    const speed = 150 + c * 22, offset = rnd(c) * 400;
+    let col = "";
+    for (let r = 0; r < 26; r++) col += `<div><span class="tag">A?</span><span class="${(r + c) % 3 === 0 ? "q" : ""}">${names[(r * 3 + c * 5) % names.length]}</span></div>`;
+    const y = -((t * speed + offset) % (64 * 14));
+    html += `<div class="col mono" style="left:${60 + c * 380}px;transform:translateY(${y}px)">${col}</div>`;
+  }
+  $("stream").innerHTML = html;
+  $("stream").style.opacity = 0.3 + 0.35 * out(prog(t, 0, 0.4));
+  const k = out(prog(t, 0.25, 0.6));
+  $("hookTitle").style.opacity = k;
+  $("hookTitle").style.transform = `scale(${0.94 + 0.06 * k})`;
+  $("hookSub").style.opacity = out(prog(t, 0.9, 1.2));
+}
+
+function renderOutro(t) {
+  const k = out(prog(t, 18.1, 18.6));
+  $("appIcon").innerHTML = APP_ICON;
+  $("appIcon").style.opacity = k;
+  $("appIcon").style.transform = `scale(${0.7 + 0.3 * k})`;
+  const k2 = out(prog(t, 18.4, 18.8));
+  $("oTitle").style.opacity = k2; $("oTitle").style.transform = `translateY(${(1 - k2) * 30}px)`;
+  const k3 = out(prog(t, 18.6, 19.0));
+  $("oSub").style.opacity = k3;
+  const k4 = out(prog(t, 19.0, 19.4));
+  $("oCmd").style.opacity = k4; $("oCmd").style.transform = `translateX(-50%) translateY(${(1 - k4) * 20}px)`;
+  $("oMeta").style.opacity = out(prog(t, 19.3, 19.7));
+}
+
+function renderDesk(t) {
+  // Default state of the desktop elements for this frame.
+  let icon = "open", menus = "", cursor = null, cursorClick = 0;
+  $("log").style.display = "none"; $("rule").style.display = "none"; $("term").style.display = "none";
+  $("ring").style.opacity = 0;
+  const cap = $("cap2");
+  $("ourIcon").style.background = "transparent";
+
+  if (t < 7.5) {
+    // Scene 2: one click.
+    const on = t >= 4.6;
+    icon = on ? "shield" : "open";
+    $("log").style.display = "block";
+    $("log").style.opacity = out(prog(t, 3.0, 3.3));
+    $("logLines").innerHTML = lookupLines(t, on ? (t - 4.6) * 2 : 0);
+    $("logState").textContent = on ? "ENCRYPTED · Cloudflare" : "PLAIN TEXT";
+    $("logState").style.color = on ? "#30D158" : "#ff9f0a";
+    cap.style.top = "150px";
+    if (t < 4.6) {
+      setCaption(cap, "Fix it from<br>the menu bar.", t, 3.2, 4.6);
+    } else {
+      setCaption(cap, "One click.<br>Encrypted DNS.<small>DNS over TLS, for every app on your Mac.</small>", t, 4.75);
+    }
+    const off = mainMenu({ on: false });
+    const onItems = mainMenu({ on: true, name: "Cloudflare" });
+    if (t >= 4.0 && t < 4.6) {
+      menus = menuHTML(off, t >= 4.3 ? "turnon" : null, MX, MY);
+      $("ourIcon").style.background = "rgba(0,0,0,.12)";
+    }
+    if (t >= 6.0) { menus = menuHTML(onItems, null, MX, MY); $("ourIcon").style.background = "rgba(0,0,0,.12)"; }
+    cursor = cursorAt(t, [[3.0, 1100, 700], [3.95, 1388, 24], [4.05, 1388, 24], [4.45, 1560, itemY(off, "turnon")], [4.6, 1560, itemY(off, "turnon")], [5.6, 1380, 30], [5.95, 1388, 24]]);
+    cursorClick = Math.max(pulse(t, 4.0), pulse(t, 4.5), pulse(t, 6.0));
+    if (t >= 4.6 && t < 5.4) ringAt(t - 4.6);
+  } else if (t < 12) {
+    // Scene 3: providers and who runs them.
+    const picked = t >= 9.0;
+    const name = picked ? "Quad9" : "Cloudflare";
+    icon = "shield";
+    const items = mainMenu({ on: true, name });
+    cap.style.top = "720px";
+    setCaption(cap, "24 providers.<br>Know who runs<br>each one.", t, 7.7);
+    const cats = [{ t: "Standard", arr: 1, id: "standard" }, { t: "Ad & malware blocking", arr: 1 }, { t: "Family", arr: 1 }];
+    const subW = 420, sub2W = 430;
+    const subX = MX - subW + 8, subY = itemTop(items, "providers");
+    const std = STANDARD.map((n) => ({ t: n, chk: n === "Cloudflare", id: "p-" + n }));
+    const sub2X = subX - sub2W + 8, sub2Y = subY;
+    const quadY = sub2Y + 8 + IH * 2 + IH / 2;
+    if (t < 9.0) {
+      $("ourIcon").style.background = "rgba(0,0,0,.12)";
+      menus = menuHTML(items, t >= 7.95 ? "providers" : null, MX, MY);
+      if (t >= 8.0) menus += menuHTML(cats, t >= 8.45 ? "standard" : null, subX, subY, subW);
+      if (t >= 8.5) menus += menuHTML(std, t >= 8.9 ? "p-Quad9" : null, sub2X, sub2Y, sub2W);
+    }
+    const about = [
+      { t: "dns.quad9.net", dis: 1 },
+      { t: "Run by Quad9 Foundation, Switzerland", dis: 1 },
+      { sep: 1 },
+      { t: "Blocks: Malicious domains: malware,<br>phishing, spyware and botnets.", wrap: 1, dis: 1 },
+      { t: "No data containing your IP address<br>is logged.", wrap: 1, dis: 1 },
+      { sep: 1 },
+      { t: "Website" }, { t: "Privacy policy" },
+    ];
+    if (t >= 9.5) {
+      $("ourIcon").style.background = "rgba(0,0,0,.12)";
+      menus = menuHTML(items, t >= 9.95 ? "about" : null, MX, MY);
+      if (t >= 10.0) menus += menuHTML(about, null, MX - 600 + 8, itemTop(items, "about"), 600);
+    }
+    const provY = itemY(items, "providers");
+    cursor = cursorAt(t, [[7.5, 1600, 400], [7.9, 1600, provY], [8.3, 1200, subY + 8 + IH / 2], [8.45, 1100, subY + 8 + IH / 2], [8.85, 900, quadY], [9.05, 900, quadY], [9.45, 1388, 24], [9.55, 1388, 24], [9.9, 1600, itemY(items, "about")]]);
+    cursorClick = Math.max(pulse(t, 9.0), pulse(t, 9.5));
+  } else if (t < 16) {
+    // Scene 4: pause and rules.
+    const paused = t >= 13.0;
+    icon = paused ? "pause" : "shield";
+    cap.style.top = "150px";
+    setCaption(cap, "Pause for a<br>hotel login.<small>Or let a network rule do it, even with the app closed.</small>", t, 12.2);
+    const items = mainMenu({ on: true, name: "Quad9" });
+    const pauseSub = [{ t: "5 minutes" }, { t: "15 minutes", id: "p15" }, { t: "1 hour" }];
+    const psX = MX - 300 + 8, psY = itemTop(items, "pause");
+    if (t < 13.0) {
+      $("ourIcon").style.background = "rgba(0,0,0,.12)";
+      menus = menuHTML(items, t >= 12.45 ? "pause" : null, MX, MY);
+      if (t >= 12.5) menus += menuHTML(pauseSub, t >= 12.9 ? "p15" : null, psX, psY, 300);
+    }
+    if (t >= 14.0) {
+      $("ourIcon").style.background = "rgba(0,0,0,.12)";
+      menus = menuHTML(mainMenu({ paused: true }), null, MX, MY);
+    }
+    $("rule").style.display = "block";
+    const kr = out(prog(t, 14.0, 14.4));
+    $("rule").style.opacity = kr;
+    $("rule").style.transform = `translateY(${(1 - kr) * 30}px)`;
+    const p15y = psY + 8 + IH * 1.5;
+    cursor = cursorAt(t, [[12.0, 1500, 700], [12.4, 1600, itemY(items, "pause")], [12.55, 1250, itemY(items, "pause")], [12.9, 1200, p15y], [13.1, 1200, p15y], [13.85, 1380, 30], [13.95, 1388, 24]]);
+    cursorClick = Math.max(pulse(t, 13.0), pulse(t, 14.0));
+  } else {
+    // Scene 5: scriptable.
+    const cmd = 'open "privatedns://toggle?token=…"';
+    const n = Math.floor(clamp((t - 16.15) / 0.75) * cmd.length);
+    $("typed").textContent = cmd.slice(0, n);
+    $("caret").style.opacity = (t > 17 || Math.floor(t * 4) % 2 === 0) ? 1 : 0;
+    $("term").style.display = "block";
+    const kt = out(prog(t, 16.0, 16.3));
+    $("term").style.opacity = kt;
+    $("term").style.transform = `translateY(${(1 - kt) * 30}px)`;
+    cap.style.top = "150px";
+    setCaption(cap, "Scriptable, too.<small>Shortcuts, Raycast, Terminal: privatedns:// links with your token.</small>", t, 16.1);
+    icon = t >= 17.0 ? "shield" : "pause";
+    if (t >= 17.0 && t < 17.8) ringAt(t - 17.0);
+  }
+
+  $("ourIcon").innerHTML = ICON[icon];
+  $("menus").innerHTML = menus;
+  const cur = $("cursor");
+  if (cursor) {
+    cur.style.display = "block";
+    cur.style.transform = `translate(${cursor[0] - 4}px, ${cursor[1] - 2}px) scale(${1 - 0.12 * cursorClick})`;
+  } else cur.style.display = "none";
+}
+
+function pulse(t, at) { return clamp(1 - Math.abs(t - at) / 0.08); }
+function ringAt(dt) {
+  const r = $("ring");
+  const k = clamp(dt / 0.8);
+  r.style.opacity = 1 - k;
+  r.style.width = r.style.height = 10 + 90 * out(k) + "px";
+}
+
+window.render = render;
+window.ready = document.fonts.ready;
+render(0);
+</script>
+</body>
+</html>
