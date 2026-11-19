@@ -3,7 +3,7 @@ import XCTest
 
 final class MobileConfigTests: XCTestCase {
     func testProfileContents() throws {
-        let rules = onDemandRules(for: .on(host: "dns.google"), rules: NetworkRules(enabled: true, offOnSSIDs: ["Hotel"]))
+        let rules = onDemandRules(for: .on(host: "dns.google"), rules: NetworkRules(enabled: true, networks: [WiFiNetwork(ssid: "Hotel")]))
         let data = try MobileConfig.data(host: "dns.google", displayName: "Google", addresses: ["8.8.8.8"], rules: rules)
         let plist = try XCTUnwrap(PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any])
         XCTAssertEqual(plist["PayloadType"] as? String, "Configuration")

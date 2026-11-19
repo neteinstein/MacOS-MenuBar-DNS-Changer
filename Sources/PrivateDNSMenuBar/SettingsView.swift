@@ -1,17 +1,85 @@
 import AppKit
+import CoreLocation
 import DNSChangerCore
 import SwiftUI
 
+/// Settings, one pane per part of the app, picked from a sidebar (like Calendar Hub's).
 struct SettingsView: View {
+    /// The pane shown, kept between openings. The menu sets it to open Settings at a given pane.
+    @AppStorage(SettingsPane.defaultsKey) private var pane: SettingsPane = .general
+
     var body: some View {
-        TabView {
-            GeneralTab().tabItem { Label("General", systemImage: "gearshape") }
-            ProvidersTab().tabItem { Label("Providers", systemImage: "server.rack") }
-            RulesTab().tabItem { Label("Networks", systemImage: "wifi") }
-            AutomationTab().tabItem { Label("Automation", systemImage: "gearshape.2") }
+        NavigationSplitView {
+            List(SettingsPane.allCases, selection: Binding(get: { pane }, set: { if let picked = $0 { pane = picked } })) { pane in
+                Label {
+                    Text(pane.title)
+                } icon: {
+                    Image(systemName: pane.symbol)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 20, height: 20)
+                        .background(pane.color.gradient, in: RoundedRectangle(cornerRadius: 5))
+                }
+                .tag(pane)
+            }
+            .navigationSplitViewColumnWidth(200)
+            .frame(minWidth: 200)
+        } detail: {
+            pane.content
+                .navigationTitle(pane.title)
         }
-        .frame(width: 560, height: 460)
+        .frame(width: 780, height: 540)
+        .toggleStyle(AccentSwitchStyle())
         .onAppear { NSApp.activate(ignoringOtherApps: true) }
+    }
+}
+
+enum SettingsPane: String, CaseIterable, Identifiable {
+    case general, providers, networks, automation, about
+
+    /// Where the shown pane is kept.
+    static let defaultsKey = "settingsPane"
+
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .general: return "General"
+        case .providers: return "Providers"
+        case .networks: return "Wi-Fi networks"
+        case .automation: return "Automation"
+        case .about: return "About"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .general: return "gearshape.fill"
+        case .providers: return "server.rack"
+        case .networks: return "wifi"
+        case .automation: return "link"
+        case .about: return "info"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .general, .about: return .gray
+        case .providers: return .blue
+        case .networks: return .teal
+        case .automation: return .purple
+        }
+    }
+
+    @MainActor @ViewBuilder
+    var content: some View {
+        switch self {
+        case .general: GeneralTab()
+        case .providers: ProvidersTab()
+        case .networks: NetworksTab()
+        case .automation: AutomationTab()
+        case .about: AboutTab()
+        }
     }
 }
 
@@ -197,59 +265,7 @@ private struct ProviderInfoView: View {
     }
 }
 
-// MARK: - Network rules
-
-private struct RulesTab: View {
-    @EnvironmentObject private var model: AppModel
-    @State private var newSSID = ""
-
-    private func binding(_ keyPath: WritableKeyPath<NetworkRules, Bool>) -> Binding<Bool> {
-        Binding(
-            get: { model.settings.rules[keyPath: keyPath] },
-            set: { value in model.updateRules { $0[keyPath: keyPath] = value } }
-        )
-    }
-
-    var body: some View {
-        Form {
-            Section {
-                Toggle("Use network rules", isOn: binding(\.enabled))
-                Text("While Private DNS is on, these networks use their own DNS servers instead, e.g. a hotel Wi-Fi with a sign-in page or an office network with internal names. macOS applies the rules itself, even while the app is closed. Your provider comes back as soon as you leave.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-            Section("Turn off on") {
-                Toggle("Any Wi-Fi network", isOn: binding(\.offOnWiFi))
-                Toggle("Ethernet", isOn: binding(\.offOnEthernet))
-            }
-            .disabled(!model.settings.rules.enabled)
-
-            Section("These Wi-Fi networks") {
-                ForEach(model.settings.rules.offOnSSIDs, id: \.self) { ssid in
-                    HStack {
-                        Text(ssid)
-                        Spacer()
-                        Button { model.updateRules { rules in rules.offOnSSIDs.removeAll { $0 == ssid } } } label: { Image(systemName: "minus.circle") }
-                            .buttonStyle(.borderless)
-                    }
-                }
-                HStack {
-                    TextField("Network name (SSID)", text: $newSSID)
-                    Button("Add") {
-                        let ssid = newSSID
-                        model.updateRules { $0.addSSID(ssid) }
-                        newSSID = ""
-                    }
-                    .disabled(newSSID.trimmingCharacters(in: .whitespaces).isEmpty)
-                    if let current = NetworkMonitor.currentSSID(), !model.settings.rules.offOnSSIDs.contains(current) {
-                        Button("Add “\(current)”") { model.updateRules { $0.addSSID(current) } }
-                    }
-                }
-            }
-            .disabled(!model.settings.rules.enabled)
-        }
-        .formStyle(.grouped)
-    }
-}
+// MARK: - Wi-Fi networks: see NetworksTab.swift
 
 // MARK: - Automation
 

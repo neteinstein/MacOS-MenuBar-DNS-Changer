@@ -5,6 +5,7 @@ import SwiftUI
 /// The menu shown when clicking the menu bar icon.
 struct MenuContent: View {
     @EnvironmentObject private var model: AppModel
+    @EnvironmentObject private var updates: UpdateChecker
 
     var body: some View {
         statusSection
@@ -72,6 +73,10 @@ struct MenuContent: View {
 
         Divider()
 
+        if let latest = updates.available {
+            Button("Update to Version \(latest.version)…") { model.confirmUpdate(to: latest) }
+        }
+        Button("Donate…") { Support.donate() }
         settingsButton
         Button("Quit Private DNS") { NSApp.terminate(nil) }
             .keyboardShortcut("q")

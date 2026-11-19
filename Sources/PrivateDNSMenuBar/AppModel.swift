@@ -49,9 +49,21 @@ final class AppModel: ObservableObject {
             let changed = network != self.network || online != self.online
             self.network = network
             self.online = online
-            if changed { Task { await self.checkHealth() } }
+            if changed {
+                Task {
+                    await self.followNetworkRules()
+                    await self.checkHealth()
+                }
+            }
         }
         monitor.start()
+        // Location access lets the app read the Wi-Fi network's name, which networks with a
+        // provider of their own need.
+        LocationAccess.shared.onChange = { [weak self] in
+            guard let self, self.network.kind == .wifi else { return }
+            self.network.ssid = NetworkMonitor.currentSSID()
+            Task { await self.followNetworkRules() }
+        }
 
         // Once every 15 s: count the pause down, end it when due, and re-check the provider now and then.
         tick = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in
@@ -143,8 +155,26 @@ final class AppModel: ObservableObject {
 
     func updateRules(_ change: (inout NetworkRules) -> Void) {
         change(&settings.rules)
-        Task { await reapply() }
+        Task {
+            await reapply()
+            await followNetworkRules()
+        }
     }
+
+    /// Switches to the provider of the Wi-Fi network the Mac is on, if it has one of its own, and
+    /// back after leaving it. Only with the Network Extension: with profiles, each switch would be
+    /// a profile to install.
+    func followNetworkRules() async {
+        guard backend.kind == .networkExtension, settings.pause == nil, !busy else { return }
+        let decision = ruleSwitch(network: network, state: state, rules: settings.rules, returnHost: settings.ruleReturnHost)
+        settings.ruleReturnHost = decision.returnHost
+        if let target = decision.target {
+            await apply(target, endsPause: false)
+        }
+    }
+
+    /// The provider the Wi-Fi network the Mac is on uses instead of the usual one, if any.
+    var networkProvider: String? { settings.rules.provider(for: network) }
 
     /// Applies [target]. A manual change ends any pause. Returns whether it worked.
     @discardableResult
@@ -172,7 +202,12 @@ final class AppModel: ObservableObject {
             lastError = error.localizedDescription
             return false
         }
-        if endsPause { settings.pause = nil }
+        // A change made by hand ends a pause, and keeps the provider when leaving a network
+        // that has its own.
+        if endsPause {
+            settings.pause = nil
+            settings.ruleReturnHost = nil
+        }
         state = target
         health = .unknown
         await refresh()
