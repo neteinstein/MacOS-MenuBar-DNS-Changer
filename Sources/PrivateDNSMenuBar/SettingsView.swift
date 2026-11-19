@@ -36,7 +36,7 @@ struct SettingsView: View {
 }
 
 enum SettingsPane: String, CaseIterable, Identifiable {
-    case general, providers, networks, automation, about
+    case general, providers, networks, automation, whyProfiles, about
 
     /// Where the shown pane is kept.
     static let defaultsKey = "settingsPane"
@@ -49,6 +49,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .providers: return "Providers"
         case .networks: return "Wi-Fi networks"
         case .automation: return "Automation"
+        case .whyProfiles: return "Why Profiles"
         case .about: return "About"
         }
     }
@@ -59,6 +60,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .providers: return "server.rack"
         case .networks: return "wifi"
         case .automation: return "link"
+        case .whyProfiles: return "checkmark.seal.fill"
         case .about: return "info"
         }
     }
@@ -69,6 +71,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .providers: return .blue
         case .networks: return .teal
         case .automation: return .purple
+        case .whyProfiles: return .orange
         }
     }
 
@@ -79,6 +82,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .providers: ProvidersTab()
         case .networks: NetworksTab()
         case .automation: AutomationTab()
+        case .whyProfiles: WhyProfilesTab()
         case .about: AboutTab()
         }
     }
@@ -121,7 +125,7 @@ private struct GeneralTab: View {
                     }
                 case .profile:
                     LabeledContent("Method", value: "Configuration profiles (DNS over TLS)")
-                    Text("This build isn't signed with Apple's Network Extension entitlement, so each switch creates a profile that you install in System Settings → Privacy & Security → Profiles. A build signed with the entitlement switches instantly; see the README.")
+                    Text("This build isn't signed with Apple's Network Extension entitlement, so each switch creates a profile that you install in System Settings → Privacy & Security → Profiles. Why Profiles, in the sidebar, explains why.")
                         .font(.caption).foregroundStyle(.secondary)
                     Button("Open Profiles") { SystemSettings.open(.profiles) }
                 }

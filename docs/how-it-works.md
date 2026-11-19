@@ -19,6 +19,8 @@ A build without the entitlement (the DMG, Homebrew, or your own build without a 
 
 macOS doesn't let apps read installed device profiles without admin rights, so in this mode the menu shows the last setting you asked for.
 
+Settings › Why Profiles says the same in the app: why this copy needs profiles, what that means day to day, and how to switch without them.
+
 ## What macOS is given
 
 Both methods give macOS the same thing, the equivalent of Android's *Private DNS provider hostname*:
