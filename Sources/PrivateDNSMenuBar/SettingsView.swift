@@ -30,7 +30,8 @@ struct SettingsView: View {
         }
         .frame(width: 780, height: 540)
         .toggleStyle(AccentSwitchStyle())
-        .onAppear { NSApp.activate(ignoringOtherApps: true) }
+        .background(SettingsWindowReader())
+        .onAppear { SettingsWindow.bringToFront() }
     }
 }
 

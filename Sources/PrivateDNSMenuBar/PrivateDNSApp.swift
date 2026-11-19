@@ -65,13 +65,10 @@ extension AppModel {
         return state.isOn ? "Private DNS on: \(currentName ?? "")" : "Private DNS off"
     }
 
-    /// Opens the Settings window and brings this (Dock-less) app to the front.
+    /// Opens the Settings window on macOS 13, where the menu has no `SettingsLink`, and brings it
+    /// in front of other apps.
     static func openSettingsWindow() {
-        NSApp.activate(ignoringOtherApps: true)
-        if #available(macOS 14, *) {
-            // Handled by SettingsLink in the menu.
-        } else {
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        }
+        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        SettingsWindow.bringToFront()
     }
 }

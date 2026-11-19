@@ -113,6 +113,7 @@ struct MenuContent: View {
     @ViewBuilder private var settingsButton: some View {
         if #available(macOS 14, *) {
             SettingsLink { Text("Settings…") }
+                .buttonStyle(BringSettingsToFrontButtonStyle())
                 .keyboardShortcut(",")
         } else {
             Button("Settings…") { AppModel.openSettingsWindow() }
