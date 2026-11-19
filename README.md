@@ -134,7 +134,7 @@ No Homebrew or Terminal needed: [Install Private DNS](docs/download.md) walks th
 ### Set it up
 
 1. Click the lock in the menu bar, open **Providers** and pick one.
-2. macOS asks you to install the profile that switches DNS: open **System Settings › Privacy & Security › Profiles**, double-click **Private DNS: <provider>** and click **Install**.
+2. macOS asks you to install the profile that switches DNS: open **System Settings › Privacy & Security › Profiles**, double-click **Private DNS: Cloudflare** (named after the provider you picked) and click **Install**.
 
 Both the DMG and Homebrew give you an app that isn't signed by Apple, so every switch is a profile to install. A build signed with Apple's Network Extension entitlement switches instantly after you allow it once in **System Settings › Network › Filters**; see [How it works](docs/how-it-works.md#two-ways-to-change-the-system-dns) and [Development](docs/development.md#signing-with-the-network-extension-entitlement).
 
