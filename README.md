@@ -6,7 +6,8 @@
 
 **Encrypted DNS from your Mac's menu bar.**
 
-A small Mac menu bar app that turns on DNS over TLS for every app on your Mac, with a provider you choose in advance, in one click. Your Wi-Fi, your ISP and the hotel network stop seeing every site you look up. It's the macOS version of [Private DNS Changer](https://github.com/neteinstein/Private-DNS-Changer) for Android.
+A small Mac menu bar app that turns on DNS over TLS for every app on your Mac, with a provider you choose in advance, in one click. Your Wi-Fi, your ISP and the hotel network stop seeing every site you look up. 
+It's the "cousin" version for macOS of [Private DNS Changer](https://github.com/neteinstein/Private-DNS-Changer) for Android.
 
 [![Version 0.1.0](https://img.shields.io/badge/version-0.1.0-2563EB)](Resources/Info.plist)
 [![CI](https://github.com/neteinstein/MacOS-MenuBar-DNS-Changer/actions/workflows/ci.yml/badge.svg)](https://github.com/neteinstein/MacOS-MenuBar-DNS-Changer/actions/workflows/ci.yml)
