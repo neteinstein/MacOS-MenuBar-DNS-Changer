@@ -13,6 +13,30 @@
 
 Requires macOS 13 Ventura or later. Built with Swift, SwiftUI (`MenuBarExtra`) and Swift Package Manager; no Xcode project needed.
 
+## How to install
+
+**No Terminal:** download [Private-DNS.dmg](https://github.com/neteinstein/MacOS-MenuBar-DNS-Changer/releases/latest/download/Private-DNS.dmg) and follow [Install Private DNS](docs/download.md), a step-by-step guide.
+
+With [Homebrew](https://brew.sh/):
+
+```bash
+brew install neteinstein/tap/macos-dns-changer
+```
+
+```bash
+brew trust --formula neteinstein/tap/macos-dns-changer
+```
+
+```bash
+brew services start neteinstein/tap/macos-dns-changer
+```
+
+The first command builds the app on your Mac (it needs the Xcode command line tools) and installs it. The second marks the formula as trusted, since recent Homebrew versions won't run formula code from a third-party tap until you say you trust it. The third starts it now and at every login; to start it once instead, run `open "$(brew --prefix)/opt/macos-dns-changer/Private DNS.app"`.
+
+Update with `brew update && brew upgrade macos-dns-changer`, then `brew services restart macos-dns-changer`.
+
+Both the disk image and Homebrew give you an app that isn't signed by Apple, so it uses [configuration profiles](#configuration-profiles-any-build) to switch DNS.
+
 ## Setup
 
 macOS only lets an app change the system DNS with Apple's permission, in one of two ways. The app picks the right one by itself.
@@ -69,10 +93,13 @@ Links without the right token, or while automation is off, are ignored, so a web
 ```bash
 swift test                 # unit tests for presets, rules, pause, automation and profiles
 swift run PrivateDNSMenuBar  # quick run from the terminal (profile mode; no notifications)
-./scripts/build-app.sh     # build/PrivateDNS.app and build/PrivateDNS.zip, universal, ad-hoc signed
+scripts/build-app.sh       # "build/Private DNS.app" for this Mac, ad-hoc signed
+UNIVERSAL=1 scripts/build-app.sh && scripts/make-dmg.sh   # Apple silicon + Intel, build/Private-DNS.dmg
 ```
 
-Requires Xcode 15 or later (Swift 5.9). The ad-hoc signed app uses configuration profiles. Because it isn't notarized, the first time you open it, right-click it and choose *Open*.
+Requires Xcode 15 or later (Swift 5.9) or its command line tools (`UNIVERSAL=1` needs full Xcode). The ad-hoc signed app uses configuration profiles.
+
+Releases (the disk image on GitHub Releases and the Homebrew formula in `neteinstein/homebrew-tap`) are described in [Releasing](docs/releasing.md).
 
 ### Signing with the Network Extension entitlement
 
@@ -84,7 +111,7 @@ Requires Xcode 15 or later (Swift 5.9). The ad-hoc signed app uses configuration
    SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" TEAM_ID=TEAMID BUNDLE_ID=org.example.privatedns PROVISIONING_PROFILE=~/Downloads/PrivateDNS.provisionprofile ./scripts/build-app.sh
    ```
 
-4. Optionally notarize `build/PrivateDNS.zip` with `xcrun notarytool submit --wait` and staple the app.
+4. Optionally pack it with `scripts/make-dmg.sh`, notarize `build/Private-DNS.dmg` with `xcrun notarytool submit --wait` and staple it.
 
 ## Project layout
 
@@ -93,7 +120,10 @@ Requires Xcode 15 or later (Swift 5.9). The ad-hoc signed app uses configuration
 | `Sources/DNSChangerCore` | Platform-independent logic: presets and provider info, hostname and NextDNS validation, settings, toggle cycling, network rules → on-demand rules, pause, the switch-back verdict, `privatedns://` parsing, `.mobileconfig` generation |
 | `Sources/PrivateDNSMenuBar` | The app: menu, Settings window, the two DNS backends, resolver probes, network monitor |
 | `Tests/DNSChangerCoreTests` | XCTest unit tests for the core |
-| `Resources` | `Info.plist` and entitlements templates used by `scripts/build-app.sh` |
+| `Resources` | `Info.plist` (the version lives here) and the entitlements template used by `scripts/build-app.sh` |
+| `scripts` | `build-app.sh` builds the app, `make-dmg.sh` packs the disk image |
+| `packaging/homebrew` | The source copy of the tap's `macos-dns-changer` formula |
+| `.github/workflows` | `ci.yml` (tests and builds on every push), `release.yml` (publishes the disk image for each new version on `main`) |
 
 ## Differences from the Android app
 
