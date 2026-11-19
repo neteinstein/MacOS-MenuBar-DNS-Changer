@@ -22,7 +22,10 @@ public enum DNSCommand: Hashable, Sendable {
         guard url.scheme?.lowercased() == scheme else { return nil }
         let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
         // Accept both privatedns://pause and privatedns:pause / privatedns:///pause.
-        let name = (url.host ?? url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))).lowercased()
+        // URL.path is empty for opaque URLs like privatedns:pause, so use URLComponents' path.
+        let path = components?.path ?? url.path
+        let host = url.host.flatMap { $0.isEmpty ? nil : $0 }
+        let name = (host ?? path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))).lowercased()
         let query = components?.queryItems ?? []
         func value(_ key: String) -> String? { query.first { $0.name == key }?.value }
 
