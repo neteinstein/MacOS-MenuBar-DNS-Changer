@@ -227,7 +227,7 @@ struct AccentSwitchStyle: ToggleStyle {
                 .onTapGesture { configuration.isOn.toggle() }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isToggle)
+        .accessibilityAddTraits(.isButton) // .isToggle needs macOS 14
         .accessibilityValue(configuration.isOn ? "On" : "Off")
         .accessibilityAction { configuration.isOn.toggle() }
     }
