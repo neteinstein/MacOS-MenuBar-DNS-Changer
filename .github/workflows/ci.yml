@@ -26,11 +26,18 @@ jobs:
       - name: Unit tests
         run: swift test
 
-      - name: Build app (universal, ad-hoc signed)
-        run: ./scripts/build-app.sh
+      # The way the Homebrew formula builds it: this Mac's architecture, SwiftPM sandbox off.
+      - name: Build app (Homebrew style)
+        run: scripts/build-app.sh --disable-sandbox
+
+      - name: Build app (Apple silicon and Intel) and disk image
+        run: |
+          UNIVERSAL=1 scripts/build-app.sh
+          lipo -archs "build/Private DNS.app/Contents/MacOS/PrivateDNSMenuBar"
+          scripts/make-dmg.sh
 
       - uses: actions/upload-artifact@v4
         with:
-          name: PrivateDNS-app
-          path: build/PrivateDNS.zip
+          name: Private-DNS-dmg
+          path: build/Private-DNS.dmg
           if-no-files-found: error

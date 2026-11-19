@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
-# Builds build/PrivateDNS.app (universal: Apple silicon + Intel) and build/PrivateDNS.zip.
+# Builds "build/Private DNS.app".
+#
+# By default it builds for this Mac's architecture, which only needs the Xcode command line tools.
+# UNIVERSAL=1 builds for Apple silicon and Intel (needs full Xcode); the release workflow uses it.
+# Any arguments are passed on to `swift build`. The Homebrew formula passes --disable-sandbox,
+# since SwiftPM can't sandbox its manifest build inside Homebrew's own build sandbox.
+#
+# The version comes from Resources/Info.plist (CFBundleShortVersionString / CFBundleVersion).
 #
 # Without signing variables the app is ad-hoc signed and switches DNS with configuration profiles.
 # For one-click switching (Network Extension), sign it with the dns-settings entitlement:
@@ -9,35 +16,29 @@
 #   PROVISIONING_PROFILE=/path/to/PrivateDNS.provisionprofile \
 #   BUNDLE_ID=org.example.privatedns \
 #   ./scripts/build-app.sh
-#
-# Other variables: VERSION (default 0.1.0), BUILD (default 1), ARCHS (default "arm64 x86_64").
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
 BUNDLE_ID="${BUNDLE_ID:-org.neteinstein.privatedns.menubar}"
-VERSION="${VERSION:-0.1.0}"
-BUILD="${BUILD:-1}"
-ARCHS="${ARCHS:-arm64 x86_64}"
-APP="build/PrivateDNS.app"
+APP="build/Private DNS.app"
 
-arch_flags=()
-for arch in $ARCHS; do arch_flags+=(--arch "$arch"); done
+ARCH_FLAGS=()
+if [[ "${UNIVERSAL:-0}" == "1" ]]; then ARCH_FLAGS=(--arch arm64 --arch x86_64); fi
 
-swift build -c release "${arch_flags[@]}"
-BIN_DIR="$(swift build -c release "${arch_flags[@]}" --show-bin-path)"
+swift build -c release --product PrivateDNSMenuBar ${ARCH_FLAGS[@]+"${ARCH_FLAGS[@]}"} "$@"
+BIN_DIR="$(swift build -c release --product PrivateDNSMenuBar ${ARCH_FLAGS[@]+"${ARCH_FLAGS[@]}"} "$@" --show-bin-path)"
 
-rm -rf "$APP" build/PrivateDNS.zip
+rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN_DIR/PrivateDNSMenuBar" "$APP/Contents/MacOS/PrivateDNSMenuBar"
-sed -e "s/__BUNDLE_ID__/$BUNDLE_ID/g" -e "s/__VERSION__/$VERSION/g" -e "s/__BUILD__/$BUILD/g" \
-  Resources/Info.plist > "$APP/Contents/Info.plist"
+sed -e "s/__BUNDLE_ID__/$BUNDLE_ID/g" Resources/Info.plist > "$APP/Contents/Info.plist"
 plutil -lint "$APP/Contents/Info.plist"
 
 if [[ -n "${SIGN_IDENTITY:-}" && -n "${PROVISIONING_PROFILE:-}" ]]; then
   : "${TEAM_ID:?TEAM_ID is required when signing with a provisioning profile}"
   cp "$PROVISIONING_PROFILE" "$APP/Contents/embedded.provisionprofile"
-  ENTITLEMENTS="$(mktemp -t privatedns-entitlements).plist"
+  ENTITLEMENTS="$(mktemp -d)/PrivateDNS.entitlements"
   sed -e "s/__TEAM_ID__/$TEAM_ID/g" -e "s/__BUNDLE_ID__/$BUNDLE_ID/g" Resources/PrivateDNS.entitlements > "$ENTITLEMENTS"
   codesign --force --options runtime --timestamp --entitlements "$ENTITLEMENTS" --sign "$SIGN_IDENTITY" "$APP"
   echo "Signed with the Network Extension entitlement: switching uses NEDNSSettingsManager."
@@ -46,6 +47,4 @@ else
   echo "Ad-hoc signed (no entitlements): switching uses configuration profiles."
 fi
 codesign --verify --strict --verbose=2 "$APP"
-
-ditto -c -k --keepParent "$APP" build/PrivateDNS.zip
-echo "Built $APP and build/PrivateDNS.zip"
+echo "Built $APP"
