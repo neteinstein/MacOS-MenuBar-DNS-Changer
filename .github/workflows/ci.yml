@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Test and build
+    runs-on: macos-15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Unit tests
+        run: swift test
+
+      # The way the Homebrew formula builds it: this Mac's architecture, SwiftPM sandbox off.
+      - name: Build app (Homebrew style)
+        run: scripts/build-app.sh --disable-sandbox
+
+      - name: Build app (Apple silicon and Intel) and disk image
+        run: |
+          UNIVERSAL=1 scripts/build-app.sh
+          lipo -archs "build/Private DNS.app/Contents/MacOS/PrivateDNSMenuBar"
+          scripts/make-dmg.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Private-DNS-dmg
+          path: build/Private-DNS.dmg
+          if-no-files-found: error
