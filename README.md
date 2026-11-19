@@ -27,7 +27,7 @@ It's the "cousin" version for macOS of [Private DNS Changer](https://github.com/
 
 ## How to install
 
-**No Terminal:** download [Private-DNS.dmg](https://github.com/neteinstein/MacOS-MenuBar-DNS-Changer/releases/latest/download/Private-DNS.dmg) and follow [Install Private DNS](docs/download.md), a step-by-step guide.
+**No Terminal:** download [Private-DNS.dmg](https://github.com/neteinstein/MacOS-MenuBar-DNS-Changer/releases/latest/download/Private-DNS.dmg), then follow the [step-by-step install guide](docs/download.md).
 
 With [Homebrew](https://brew.sh/):
 
@@ -130,12 +130,12 @@ Use `brew services` rather than **Open at login** in Settings: the service runs 
 
 ### Download
 
-No Homebrew or Terminal needed: [Install Private DNS](docs/download.md) walks through downloading [Private-DNS.dmg](https://github.com/neteinstein/MacOS-MenuBar-DNS-Changer/releases/latest/download/Private-DNS.dmg), dragging it into Applications and allowing it the first time (it isn't signed by Apple).
+No Homebrew or Terminal needed: the [step-by-step install guide](docs/download.md) walks through downloading [Private-DNS.dmg](https://github.com/neteinstein/MacOS-MenuBar-DNS-Changer/releases/latest/download/Private-DNS.dmg), dragging it into Applications and allowing it the first time (it isn't signed by Apple).
 
 ### Set it up
 
 1. Click the lock in the menu bar, open **Providers** and pick one.
-2. macOS asks you to install the profile that switches DNS: open **System Settings › Privacy & Security › Profiles**, double-click **Private DNS: <provider>** and click **Install**.
+2. macOS asks you to install the profile that switches DNS: open **System Settings › Privacy & Security › Profiles**, double-click **Private DNS: Cloudflare** (named after the provider you picked) and click **Install**.
 
 Both the DMG and Homebrew give you an app that isn't signed by Apple, so every switch is a profile to install. A build signed with Apple's Network Extension entitlement switches instantly after you allow it once in **System Settings › Network › Filters**; see [How it works](docs/how-it-works.md#two-ways-to-change-the-system-dns) and [Development](docs/development.md#signing-with-the-network-extension-entitlement).
 

@@ -32,7 +32,7 @@ You only do this once. From then on it opens like any other app.
 A lock icon appears in the menu bar, at the top right of your screen.
 
 1. Click it, open **Providers** and pick one (Cloudflare, Quad9, Mullvad…).
-2. macOS opens System Settings with a new profile, **Private DNS: <provider>**. Open **Privacy & Security › Profiles** (on some versions, **General › Device Management**), double-click the profile and click **Install**, then enter your password.
+2. macOS opens System Settings with a new profile named after the provider, for example **Private DNS: Cloudflare**. Open **Privacy & Security › Profiles** (on some versions, **General › Device Management**), double-click the profile and click **Install**, then enter your password.
 
 That's it: the lock in the menu bar is closed while encrypted DNS is on. Every time you switch provider or turn it off, macOS asks you to install the new profile the same way. To have it start whenever you log in, turn on **Open at login** in Settings › General.
 
